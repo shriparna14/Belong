@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete listing — belong.{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 3.5rem; padding-bottom: 5rem;">
+  <div style="max-width: 480px; margin: 0 auto; background: var(--surface-white); border: 1px solid var(--border-neutral); border-radius: var(--radius-lg); padding: 2.5rem; text-align: center; box-shadow: var(--shadow-card);">
+    <h2 style="font-size: 1.4rem; color: var(--deep-pine); margin-bottom: 0.5rem;">
+      Delete listing?
+    </h2>
+    <p style="color: var(--text-secondary); font-size: 0.92rem; margin-bottom: 1.75rem;">
+      Are you sure you want to remove "<strong>{{ item.title }}</strong>"? This action cannot be undone.
+    </p>
+
+    <form method="POST">
+      {% csrf_token %}
+      <div style="display: flex; gap: 0.75rem; justify-content: center;">
+        <button type="submit" class="btn btn-danger" style="flex: 1;">
+          Yes, delete
+        </button>
+        <a href="{% url 'items:detail' item.pk %}" class="btn btn-secondary" style="flex: 1;">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

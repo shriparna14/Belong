@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile — belong.{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 3rem; padding-bottom: 5rem;">
+  <div style="max-width: 580px; margin: 0 auto; background: var(--surface-white); border: 1px solid var(--border-neutral); border-radius: var(--radius-lg); padding: 2.5rem; box-shadow: var(--shadow-card);">
+    <div style="margin-bottom: 2rem;">
+      <h1 style="font-size: 1.6rem; color: var(--deep-pine); margin-bottom: 0.25rem;">
+        {{ user.get_full_name|default:user.username }}
+      </h1>
+      <div style="font-size: 0.85rem; color: var(--text-secondary);">
+        {{ user.profile.get_role_display|default:"Student" }} &bull; Member since {{ user.date_joined|date:"M Y" }}
+      </div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="id_first_name">First Name</label>
+          {{ form.first_name }}
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="id_last_name">Last Name</label>
+          {{ form.last_name }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_email">Email</label>
+        {{ form.email }}
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="id_campus_id">Campus ID</label>
+          {{ form.campus_id }}
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="id_department">Department</label>
+          {{ form.department }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_phone_number">Phone Number</label>
+        {{ form.phone_number }}
+      </div>
+
+      <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+        <button type="submit" class="btn btn-primary" style="flex: 1;">
+          Save changes
+        </button>
+        <a href="{% url 'accounts:dashboard' %}" class="btn btn-secondary">
+          Dashboard
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

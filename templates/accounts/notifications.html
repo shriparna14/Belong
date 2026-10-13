@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications — belong.{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2.5rem; padding-bottom: 4rem;">
+  <div style="max-width: 680px; margin: 0 auto;">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+      <div>
+        <h1 style="font-size: 1.85rem; color: var(--deep-pine); margin-bottom: 0.25rem;">
+          Notifications
+        </h1>
+        <p style="color: var(--text-secondary); font-size: 0.92rem;">
+          Updates on your reports, claims, and verified handoffs.
+        </p>
+      </div>
+
+      {% if notifications %}
+        <form method="POST" action="{% url 'accounts:mark_all_notifications_read' %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline btn-sm">
+            Mark all as read
+          </button>
+        </form>
+      {% endif %}
+    </div>
+
+    {% if notifications %}
+      <div style="display: flex; flex-direction: column;">
+        {% for notif in notifications %}
+          <div class="notif-card {% if not notif.is_read %}unread{% endif %}">
+            <div style="flex: 1;">
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.2rem;">
+                <h3 style="font-size: 0.98rem; color: var(--deep-pine); margin-bottom: 0;">
+                  {{ notif.title }}
+                </h3>
+                {% if not notif.is_read %}
+                  <span class="badge badge-lost" style="font-size: 0.65rem;">New</span>
+                {% endif %}
+              </div>
+              <p style="font-size: 0.88rem; color: var(--text-main); margin-bottom: 0.35rem; line-height: 1.4;">
+                {{ notif.message }}
+              </p>
+              <div style="font-size: 0.78rem; color: var(--text-secondary);">
+                {{ notif.created_at|timesince }} ago
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              {% if notif.link %}
+                <a href="{% url 'accounts:mark_notification_read' notif.pk %}" class="btn btn-secondary btn-sm">
+                  View &rarr;
+                </a>
+              {% else %}
+                {% if not notif.is_read %}
+                  <a href="{% url 'accounts:mark_notification_read' notif.pk %}" class="btn btn-outline btn-sm">
+                    Mark read
+                  </a>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="background: var(--surface-white); border: 1px dashed var(--border-neutral); border-radius: var(--radius-md); padding: 3rem 2rem; text-align: center;">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="1.5" style="margin: 0 auto 0.75rem;">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+        <p style="color: var(--text-secondary); margin-bottom: 0;">You have no notifications right now.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

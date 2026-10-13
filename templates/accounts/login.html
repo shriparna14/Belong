@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign in — belong.{% endblock %}
+
+{% block content %}
+<div class="auth-page-wrapper">
+  <div class="auth-container-2col">
+    <!-- Left / Main Form Column -->
+    <div class="auth-main-col">
+      <div class="auth-brand">
+        <a href="{% url 'items:index' %}" class="brand-wordmark">
+          <span class="brand-name">belong.</span>
+          <span class="brand-tagline">Campus lost &amp; found</span>
+        </a>
+      </div>
+
+      <h1 class="auth-heading">Good to have you back.</h1>
+      <p class="auth-subtext">Your campus community is just a sign in away.</p>
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+          {% for error in form.non_field_errors %}
+            <div>{{ error }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="POST" action="{% url 'accounts:login' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label class="form-label" for="id_username">Email or Username</label>
+          {{ form.username }}
+          {% if form.username.errors %}
+            <div class="form-error">{{ form.username.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="login-password-field">Password</label>
+          <div class="input-password-wrap">
+            {{ form.password }}
+            <button type="button" class="password-toggle-btn" data-target="login-password-field" aria-label="Toggle password visibility">
+              Show
+            </button>
+          </div>
+          {% if form.password.errors %}
+            <div class="form-error">{{ form.password.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top: 0.5rem;">
+          Sign in
+        </button>
+
+        <div class="auth-footer-link">
+          Don't have an account? <a href="{% url 'accounts:register' %}">Create one here</a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Right / Editorial Visual Column -->
+    <div class="auth-side-col">
+      <div class="auth-visual-box">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#52745F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+          <path d="M2 12h20"></path>
+        </svg>
+      </div>
+
+      <div class="auth-editorial-content">
+        <div class="auth-editorial-kicker">Campus Reconnection</div>
+        <h2 class="auth-editorial-title">Every belonging has a way back.</h2>
+        <p class="auth-editorial-desc">
+          From lost keys in lecture halls to misplaced bags at the library, we help reunite students with what matters.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

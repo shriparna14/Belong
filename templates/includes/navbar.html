@@ -1,0 +1,65 @@
+<header class="navbar">
+  <div class="container nav-wrapper">
+    <a href="{% url 'items:index' %}" class="brand-wordmark">
+      <span class="brand-name">belong.</span>
+      <span class="brand-tagline">Lost here. Found together.</span>
+    </a>
+
+    <ul class="nav-center">
+      <li>
+        <a href="{% url 'items:index' %}" class="nav-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}">
+          Browse items
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'items:desk' %}" class="nav-link {% if request.resolver_match.url_name == 'desk' %}active{% endif %}">
+          Campus desk
+          {% if aged_items_count > 0 %}
+            <span class="badge badge-aging" style="margin-left: 0.25rem;">{{ aged_items_count }}</span>
+          {% endif %}
+        </a>
+      </li>
+      {% if user.is_authenticated and user.is_staff %}
+        <li>
+          <a href="{% url 'admin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}" style="color: var(--deep-pine); font-weight: 600;">
+            Admin
+          </a>
+        </li>
+      {% endif %}
+    </ul>
+
+    <div class="nav-right">
+      <a href="{% url 'items:create' %}" class="btn btn-primary btn-sm">
+        + Report an item
+      </a>
+
+      {% if user.is_authenticated %}
+        <div class="account-menu">
+          <!-- Notification Bell -->
+          <a href="{% url 'accounts:notifications' %}" class="nav-notif-btn" title="Notifications" aria-label="Notifications">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            {% if unread_notifications_count > 0 %}
+              <span class="notif-badge-count">{{ unread_notifications_count }}</span>
+            {% endif %}
+          </a>
+
+          <a href="{% url 'my_activity' %}" class="btn btn-secondary btn-sm {% if request.resolver_match.url_name == 'dashboard' or request.resolver_match.url_name == 'my_activity' %}active{% endif %}" title="My Activity">
+            My Activity
+          </a>
+          <a href="{% url 'accounts:profile' %}" class="btn btn-outline btn-sm" title="My Profile">
+            {{ user.first_name|default:user.username }}
+          </a>
+          <a href="{% url 'accounts:logout' %}" class="btn btn-outline btn-sm" title="Sign out" style="color: var(--muted-clay);">
+            Sign out
+          </a>
+        </div>
+      {% else %}
+        <a href="{% url 'accounts:login' %}" class="btn btn-outline btn-sm">Sign in</a>
+        <a href="{% url 'accounts:register' %}" class="btn btn-sage btn-sm">Register</a>
+      {% endif %}
+    </div>
+  </div>
+</header>

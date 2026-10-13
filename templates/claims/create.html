@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Claim {{ item.title }} — belong.{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2.5rem; padding-bottom: 4rem;">
+  <div style="max-width: 640px; margin: 0 auto; background: var(--surface-white); border: 1px solid var(--border-neutral); border-radius: var(--radius-lg); padding: 2.5rem; box-shadow: var(--shadow-card);">
+    <!-- Item Mini Header -->
+    <div style="display: flex; gap: 1rem; align-items: center; padding-bottom: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-neutral);">
+      {% if item.image %}
+        <img src="{{ item.image.url }}" alt="{{ item.title }}" style="width: 64px; height: 64px; object-fit: cover; border-radius: var(--radius-sm);">
+      {% else %}
+        <div style="width: 64px; height: 64px; background: #ECEBE5; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: #8C9991; font-size: 0.8rem; font-weight: 700;">
+          {{ item.category.name|default:"Item" }}
+        </div>
+      {% endif %}
+
+      <div>
+        <span class="badge badge-found" style="margin-bottom: 0.25rem;">Found item claim</span>
+        <h2 style="font-size: 1.25rem; color: var(--deep-pine); margin-bottom: 0.2rem;">{{ item.title }}</h2>
+        <div style="font-size: 0.82rem; color: var(--text-secondary);">
+          Found at {{ item.location.name|default:"Campus" }} on {{ item.incident_date|date:"d M Y" }}
+        </div>
+      </div>
+    </div>
+
+    <div style="background: var(--bg-ivory); border: 1px solid var(--border-neutral); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--text-main);">
+      <strong>Ownership Verification Process:</strong><br>
+      1. Describe identifying marks or contents known only to the genuine owner.<br>
+      2. The finder or campus desk officer reviews your evidence.<br>
+      3. When approved, you will receive a secure 6-digit OTP code to present at pickup.
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      {% if form.errors %}
+        <div class="alert alert-error">Please review and fix errors before submitting.</div>
+      {% endif %}
+
+      <div class="form-group">
+        <label class="form-label" for="id_description">Proof of ownership description *</label>
+        {{ form.description }}
+        <div class="form-help">
+          Be specific (e.g. unique scratches, lock screen picture, pouch contents, brand serial number).
+        </div>
+        {% if form.description.errors %}<div class="form-error">{{ form.description.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_proof_image">Supporting proof photo (Optional, max 5 MB)</label>
+        {{ form.proof_image }}
+        <div class="form-help">
+          Original receipt, product box, or past photo showing you with the item.
+        </div>
+        <div class="image-preview-box" id="id_proof_image_preview" style="display: none; margin-top: 0.75rem;"></div>
+        {% if form.proof_image.errors %}<div class="form-error">{{ form.proof_image.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+        <button type="submit" class="btn btn-primary btn-lg" style="flex: 1;">
+          Submit claim
+        </button>
+        <a href="{% url 'items:detail' item.pk %}" class="btn btn-secondary btn-lg">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

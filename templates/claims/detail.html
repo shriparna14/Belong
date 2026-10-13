@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}Claim #{{ claim.pk }} — belong.{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2.5rem; padding-bottom: 4rem;">
+  <!-- Breadcrumb -->
+  <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+    <a href="{% url 'items:index' %}">All listings</a>
+    <span>&rsaquo;</span>
+    <a href="{% url 'items:detail' item.pk %}">{{ item.title }}</a>
+    <span>&rsaquo;</span>
+    <span style="color: var(--deep-pine); font-weight: 500;">Claim #{{ claim.pk }}</span>
+  </div>
+
+  <div class="detail-grid">
+    <!-- Main Column -->
+    <div>
+      <div style="background: var(--surface-white); border: 1px solid var(--border-neutral); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 1.5rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+          <h1 style="font-size: 1.6rem; color: var(--deep-pine);">
+            Claim on "{{ item.title }}"
+          </h1>
+          <span class="badge badge-pending">{{ claim.get_status_display }}</span>
+        </div>
+
+        <div style="display: flex; gap: 1rem; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem;">
+          <div>Claimant: <strong>{{ claim.claimant.get_full_name|default:claim.claimant.username }}</strong></div>
+          <div>&bull;</div>
+          <div>Submitted: {{ claim.created_at|date:"d M Y H:i" }}</div>
+        </div>
+
+        <div style="margin-bottom: 1.75rem;">
+          <h3 style="font-size: 1rem; color: var(--deep-pine); margin-bottom: 0.5rem;">
+            Claimant's ownership evidence
+          </h3>
+          <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.6; white-space: pre-line; background: var(--bg-ivory); padding: 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-neutral);">
+            {{ claim.description }}
+          </p>
+        </div>
+
+        {% if claim.proof_image %}
+          <div style="margin-bottom: 1.75rem;">
+            <h3 style="font-size: 1rem; color: var(--deep-pine); margin-bottom: 0.5rem;">
+              Attached proof photograph
+            </h3>
+            <img src="{{ claim.proof_image.url }}" alt="Proof photo" style="max-height: 360px; border-radius: var(--radius-sm); border: 1px solid var(--border-neutral);">
+          </div>
+        {% endif %}
+
+        {% if claim.review_notes %}
+          <div style="background: var(--soft-sage); border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 1.5rem;">
+            <h4 style="font-size: 0.88rem; color: var(--deep-pine); margin-bottom: 0.35rem;">Review feedback</h4>
+            <p style="font-size: 0.88rem; color: var(--text-main);">{{ claim.review_notes }}</p>
+            {% if claim.reviewed_by %}
+              <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                Reviewed by {{ claim.reviewed_by.get_full_name|default:claim.reviewed_by.username }} on {{ claim.reviewed_at|date:"d M Y" }}
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {% if claim.status == 'completed' %}
+          <div style="background: var(--soft-sage); border: 1px solid #C4D2C4; border-radius: var(--radius-sm); padding: 1.5rem; text-align: center;">
+            <h3 style="font-size: 1.2rem; color: var(--deep-pine); margin-bottom: 0.25rem;">
+              Handoff Completed &amp; Reunited
+            </h3>
+            <p style="font-size: 0.88rem; color: var(--text-secondary);">
+              The 6-digit OTP code was verified in person. The item is safely returned to its owner.
+            </p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right Column: OTP Interaction & Review Workflow -->
+    <div>
+      <!-- Claimant View with Approved OTP -->
+      {% if is_claimant and claim.status == 'approved' and otp %}
+        <div class="otp-display-card">
+          <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--soft-sage); font-weight: 700;">
+            Your Handoff OTP Code
+          </div>
+          
+          <div class="otp-number">
+            {{ otp.otp_code }}
+          </div>
+
+          <p style="font-size: 0.85rem; color: #D1DDD1; margin-bottom: 1.25rem;">
+            Present this 6-digit number to the person holding your item during pickup.
+          </p>
+
+          <button type="button" class="btn btn-secondary btn-sm" id="copyOtpBtn" data-otp="{{ otp.otp_code }}" style="margin-bottom: 1rem;">
+            Copy OTP Code
+          </button>
+
+          <div id="otpCountdown" data-expires="{{ otp.expires_at|date:'U' }}" style="font-size: 0.82rem; color: var(--soft-sage);">
+            Checking expiry...
+          </div>
+
+          <div id="regenOtpContainer" style="display: {% if otp.is_expired %}block{% else %}none{% endif %}; margin-top: 1rem;">
+            <form method="POST" action="{% url 'claims:regenerate_otp' claim.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline btn-sm" style="color: #fff; border-color: rgba(255,255,255,0.3);">
+                Regenerate OTP
+              </button>
+            </form>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Finder or Desk Review Panel -->
+      {% if is_finder or is_desk %}
+        {% if claim.status == 'pending' %}
+          <div style="background: var(--surface-white); border: 1px solid var(--border-neutral); border-radius: var(--radius-md); padding: 1.5rem;">
+            <h3 style="font-size: 1.1rem; color: var(--deep-pine); margin-bottom: 0.5rem;">
+              Review claim
+            </h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+              Compare evidence against confidential details before approving.
+            </p>
+
+            <form method="POST" action="{% url 'claims:review' claim.pk %}">
+              {% csrf_token %}
+              <div class="form-group">
+                <label class="form-label" for="review_notes">Instructions or notes</label>
+                <textarea name="review_notes" id="review_notes" rows="3" class="form-textarea" placeholder="e.g. Meet at Library 1st floor desk between 2-4 PM..."></textarea>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <button type="submit" name="action" value="approve" class="btn btn-primary btn-full">
+                  Approve &amp; issue OTP
+                </button>
+                <button type="submit" name="action" value="reject" class="btn btn-outline btn-full" style="color: var(--muted-clay);">
+                  Reject claim
+                </button>
+              </div>
+            </form>
+          </div>
+        {% endif %}
+
+        <!-- OTP Verification Form -->
+        {% if claim.status == 'approved' and verify_form %}
+          <div style="background: var(--surface-white); border: 1px solid var(--deep-pine); border-radius: var(--radius-md); padding: 1.5rem;">
+            <h3 style="font-size: 1.1rem; color: var(--deep-pine); margin-bottom: 0.4rem;">
+              Verify in-person OTP
+            </h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+              Ask claimant for their 6-digit code before handing over the item.
+            </p>
+
+            <form method="POST" action="{% url 'claims:verify_otp' claim.pk %}">
+              {% csrf_token %}
+              <div class="form-group">
+                <label class="form-label">Enter 6-digit code</label>
+                {{ verify_form.otp_code }}
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Handoff notes (Optional)</label>
+                {{ verify_form.notes }}
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-full btn-lg">
+                Confirm handoff
+              </button>
+            </form>
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Campus Desk Console — belong.{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2.5rem; padding-bottom: 4rem;">
+  <div style="display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+    <div>
+      <div class="hero-kicker">Campus Safety &amp; Inventory</div>
+      <h1 style="font-size: 2rem; color: var(--deep-pine);">Lost &amp; Found Desk Console</h1>
+      <p style="color: var(--text-secondary); font-size: 0.95rem;">
+        Monitor item aging, audit inventory exceeding the {{ threshold_days }}-day threshold, and oversee physical handoffs.
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="{% url 'items:create' %}?type=found" class="btn btn-primary btn-sm">
+        + Log found item
+      </a>
+      <a href="/admin/items/item/" class="btn btn-secondary btn-sm" target="_blank">
+        Django admin &rarr;
+      </a>
+    </div>
+  </div>
+
+  <!-- Aging Items Table -->
+  <div style="background: var(--surface-white); border: 1px solid var(--border-neutral); border-radius: var(--radius-md); padding: 1.75rem; margin-bottom: 2.5rem; box-shadow: var(--shadow-subtle);">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1.25rem;">
+      <h2 style="font-size: 1.25rem; color: var(--deep-pine);">
+        Aged unclaimed items (&gt; {{ threshold_days }} days old)
+      </h2>
+      <span class="badge badge-aging">{{ aged_items.count }} pending review</span>
+    </div>
+
+    {% if aged_items %}
+      <div style="overflow-x: auto;">
+        <table class="desk-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Category</th>
+              <th>Location</th>
+              <th>Days open</th>
+              <th>Holding custody</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for it in aged_items %}
+              <tr>
+                <td>
+                  <strong><a href="{% url 'items:detail' it.pk %}">{{ it.title }}</a></strong>
+                  <div style="font-size: 0.78rem; color: var(--text-secondary);">Logged {{ it.created_at|date:"d M Y" }}</div>
+                </td>
+                <td>{{ it.category.name|default:"-" }}</td>
+                <td>{{ it.location.name|default:"Unspecified" }}</td>
+                <td><span style="color: var(--muted-clay); font-weight: 700;">{{ it.days_open }}d</span></td>
+                <td>{{ it.holding_location }}</td>
+                <td>
+                  <div style="display: flex; gap: 0.4rem;">
+                    <a href="{% url 'items:detail' it.pk %}" class="btn btn-outline btn-sm">Review</a>
+                    <a href="{% url 'items:edit' it.pk %}" class="btn btn-secondary btn-sm">Custody</a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="padding: 2.5rem 1rem; text-align: center; color: var(--text-secondary);">
+        <p>No items have reached the {{ threshold_days }}-day aging threshold.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Ready for Handoff -->
+  <div style="background: var(--surface-white); border: 1px solid var(--border-neutral); border-radius: var(--radius-md); padding: 1.75rem; box-shadow: var(--shadow-subtle);">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1.25rem;">
+      <h2 style="font-size: 1.25rem; color: var(--deep-pine);">
+        Approved handoffs awaiting pickup
+      </h2>
+      <span class="badge badge-found">{{ handoff_ready_items.count }} ready</span>
+    </div>
+
+    {% if handoff_ready_items %}
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+        {% for it in handoff_ready_items %}
+          <div style="border: 1px solid var(--border-neutral); border-radius: var(--radius-sm); padding: 1.25rem; background: var(--bg-ivory);">
+            <div style="font-size: 0.75rem; font-weight: 700; color: var(--muted-green); text-transform: uppercase; margin-bottom: 0.25rem;">
+              Awaiting in-person OTP
+            </div>
+            <h4 style="font-size: 1rem; margin-bottom: 0.4rem;">
+              <a href="{% url 'items:detail' it.pk %}">{{ it.title }}</a>
+            </h4>
+            <div style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.85rem;">
+              {{ it.location.name|default:"Campus" }} &bull; {{ it.holding_location }}
+            </div>
+            <a href="{% url 'items:detail' it.pk %}" class="btn btn-primary btn-sm btn-full">
+              Open item &amp; verify OTP &rarr;
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="padding: 2.5rem 1rem; text-align: center; color: var(--text-secondary);">
+        <p>No items currently awaiting in-person OTP verification.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

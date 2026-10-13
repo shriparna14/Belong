@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Register — belong.{% endblock %}
+
+{% block content %}
+<div class="auth-page-wrapper">
+  <div class="auth-container-single">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div class="auth-brand" style="margin-bottom: 0.75rem;">
+        <a href="{% url 'items:index' %}" class="brand-wordmark" style="align-items: center;">
+          <span class="brand-name">belong.</span>
+        </a>
+      </div>
+      <h1 class="auth-heading">Find your place here.</h1>
+      <p class="auth-subtext" style="margin-bottom: 0;">Join your campus community and help belongings find their way home.</p>
+    </div>
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+        {% for error in form.non_field_errors %}
+          <div>{{ error }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="POST" action="{% url 'accounts:register' %}">
+      {% csrf_token %}
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="id_first_name">First Name</label>
+          {{ form.first_name }}
+          {% if form.first_name.errors %}<div class="form-error">{{ form.first_name.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_last_name">Last Name</label>
+          {{ form.last_name }}
+          {% if form.last_name.errors %}<div class="form-error">{{ form.last_name.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="id_username">Username</label>
+          {{ form.username }}
+          {% if form.username.errors %}<div class="form-error">{{ form.username.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_email">Campus Email</label>
+          {{ form.email }}
+          {% if form.email.errors %}<div class="form-error">{{ form.email.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="id_campus_id">Campus ID (Optional)</label>
+          {{ form.campus_id }}
+          {% if form.campus_id.errors %}<div class="form-error">{{ form.campus_id.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_department">Department (Optional)</label>
+          {{ form.department }}
+          {% if form.department.errors %}<div class="form-error">{{ form.department.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_phone_number">Phone Number (Optional)</label>
+        {{ form.phone_number }}
+        {% if form.phone_number.errors %}<div class="form-error">{{ form.phone_number.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="reg-password-field">Password</label>
+          <div class="input-password-wrap">
+            {{ form.password }}
+            <button type="button" class="password-toggle-btn" data-target="reg-password-field" aria-label="Toggle password visibility">
+              Show
+            </button>
+          </div>
+          {% if form.password.errors %}<div class="form-error">{{ form.password.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="reg-confirm-password-field">Confirm Password</label>
+          <div class="input-password-wrap">
+            {{ form.confirm_password }}
+            <button type="button" class="password-toggle-btn" data-target="reg-confirm-password-field" aria-label="Toggle confirm password visibility">
+              Show
+            </button>
+          </div>
+          {% if form.confirm_password.errors %}<div class="form-error">{{ form.confirm_password.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top: 1rem;">
+        Create account
+      </button>
+
+      <div class="auth-footer-link">
+        Already have an account? <a href="{% url 'accounts:login' %}">Sign in</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

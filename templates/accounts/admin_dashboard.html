@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard — belong.{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2.5rem; padding-bottom: 4rem;">
+  <!-- Header -->
+  <div style="display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+    <div>
+      <div style="display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+        <span class="badge" style="background: rgba(31, 52, 45, 0.1); color: var(--deep-pine); font-size: 0.75rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; padding: 0.2rem 0.5rem; border-radius: var(--radius-xs);">
+          Staff Only
+        </span>
+      </div>
+      <h1 style="font-size: 2rem; color: var(--deep-pine); margin-bottom: 0.25rem;">
+        Administrative Overview
+      </h1>
+      <p style="color: var(--text-secondary); font-size: 0.95rem;">
+        Campus-wide operational metrics, live item reports, and claim management.
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+      <a href="/admin/items/item/" class="btn btn-secondary btn-sm" target="_blank" rel="noopener">
+        Django Admin Items &rarr;
+      </a>
+      <a href="/admin/claims/claim/" class="btn btn-primary btn-sm" target="_blank" rel="noopener">
+        Django Admin Claims &rarr;
+      </a>
+    </div>
+  </div>
+
+  <!-- Metric Stat Cards Grid -->
+  <div class="admin-stats-grid">
+    <div class="admin-stat-card admin-card-blue">
+      <div class="admin-stat-num">{{ total_users }}</div>
+      <div class="admin-stat-title">Total Users</div>
+      <a href="/admin/auth/user/" style="font-size: 0.78rem; color: #3B82F6; text-decoration: none; display: inline-block; margin-top: 0.5rem; font-weight: 500;">
+        Manage users &rarr;
+      </a>
+    </div>
+
+    <div class="admin-stat-card admin-card-pine">
+      <div class="admin-stat-num">{{ total_reports }}</div>
+      <div class="admin-stat-title">Total Reports</div>
+      <a href="/admin/items/item/" style="font-size: 0.78rem; color: var(--deep-pine); text-decoration: none; display: inline-block; margin-top: 0.5rem; font-weight: 500;">
+        All items &rarr;
+      </a>
+    </div>
+
+    <div class="admin-stat-card admin-card-clay">
+      <div class="admin-stat-num">{{ lost_items }}</div>
+      <div class="admin-stat-title">Lost Items</div>
+      <span style="font-size: 0.78rem; color: var(--muted-clay); display: inline-block; margin-top: 0.5rem; font-weight: 500;">
+        Seeking owners
+      </span>
+    </div>
+
+    <div class="admin-stat-card admin-card-green">
+      <div class="admin-stat-num">{{ found_items }}</div>
+      <div class="admin-stat-title">Found Items</div>
+      <span style="font-size: 0.78rem; color: var(--muted-green); display: inline-block; margin-top: 0.5rem; font-weight: 500;">
+        Awaiting retrieval
+      </span>
+    </div>
+
+    <div class="admin-stat-card admin-card-emerald">
+      <div class="admin-stat-num">{{ returned_items }}</div>
+      <div class="admin-stat-title">Returned Items</div>
+      <span style="font-size: 0.78rem; color: #10B981; display: inline-block; margin-top: 0.5rem; font-weight: 500;">
+        Successfully resolved
+      </span>
+    </div>
+
+    <div class="admin-stat-card admin-card-amber">
+      <div class="admin-stat-num">{{ pending_claims }}</div>
+      <div class="admin-stat-title">Pending Claims</div>
+      <a href="/admin/claims/claim/?status__exact=pending" style="font-size: 0.78rem; color: #D97706; text-decoration: none; display: inline-block; margin-top: 0.5rem; font-weight: 600;">
+        Review queue &rarr;
+      </a>
+    </div>
+  </div>
+
+  <!-- Recent Reports & Recent Claims Split -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.75rem;">
+    <!-- Recent Reports Panel -->
+    <div style="background: var(--surface-white); border: 1px solid var(--border-neutral); border-radius: var(--radius-md); padding: 1.5rem; box-shadow: var(--shadow-subtle);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-neutral);">
+        <h2 style="font-size: 1.15rem; color: var(--deep-pine); margin: 0; font-family: var(--font-heading);">
+          Recent Reports
+        </h2>
+        <a href="{% url 'items:index' %}" style="font-size: 0.82rem; color: var(--muted-green); text-decoration: none; font-weight: 600;">
+          View directory &rarr;
+        </a>
+      </div>
+
+      {% if recent_reports %}
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          {% for it in recent_reports %}
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.75rem; border-radius: var(--radius-sm); background: var(--bg-ivory); border: 1px solid rgba(229, 227, 218, 0.6); gap: 0.75rem;">
+              <div style="min-width: 0;">
+                <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem; flex-wrap: wrap;">
+                  {% if it.item_type == 'lost' %}
+                    <span class="badge badge-lost" style="font-size: 0.68rem; padding: 0.15rem 0.4rem;">Lost</span>
+                  {% elif it.status == 'returned' %}
+                    <span class="badge badge-returned" style="font-size: 0.68rem; padding: 0.15rem 0.4rem;">Returned</span>
+                  {% else %}
+                    <span class="badge badge-found" style="font-size: 0.68rem; padding: 0.15rem 0.4rem;">Found</span>
+                  {% endif %}
+
+                  {% if it.category %}
+                    <span class="badge badge-category cat-{{ it.category.icon|default:'other' }}" style="font-size: 0.68rem; padding: 0.15rem 0.4rem;">
+                      {{ it.category.name }}
+                    </span>
+                  {% endif %}
+                </div>
+                <a href="{% url 'items:detail' it.pk %}" style="font-weight: 600; font-size: 0.9rem; color: var(--deep-pine); text-decoration: none; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  {{ it.title }}
+                </a>
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem;">
+                  By {{ it.reporter.username }} &bull; {{ it.created_at|timesince }} ago
+                </div>
+              </div>
+
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem; flex-shrink: 0;">
+                <a href="/admin/items/item/{{ it.pk }}/change/" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" target="_blank" rel="noopener">
+                  Admin Edit
+                </a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; text-align: center; padding: 2rem 0;">No reports recorded yet.</p>
+      {% endif %}
+    </div>
+
+    <!-- Recently Submitted Claims Panel -->
+    <div style="background: var(--surface-white); border: 1px solid var(--border-neutral); border-radius: var(--radius-md); padding: 1.5rem; box-shadow: var(--shadow-subtle);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-neutral);">
+        <h2 style="font-size: 1.15rem; color: var(--deep-pine); margin: 0; font-family: var(--font-heading);">
+          Recently Submitted Claims
+        </h2>
+        <a href="/admin/claims/claim/" style="font-size: 0.82rem; color: var(--muted-green); text-decoration: none; font-weight: 600;">
+          All claims &rarr;
+        </a>
+      </div>
+
+      {% if recent_claims %}
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          {% for cl in recent_claims %}
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.75rem; border-radius: var(--radius-sm); background: var(--bg-ivory); border: 1px solid rgba(229, 227, 218, 0.6); gap: 0.75rem;">
+              <div style="min-width: 0;">
+                <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem;">
+                  {% if cl.status == 'approved' %}
+                    <span class="badge badge-approved" style="font-size: 0.68rem; padding: 0.15rem 0.4rem;">Approved</span>
+                  {% elif cl.status == 'rejected' %}
+                    <span class="badge badge-rejected" style="font-size: 0.68rem; padding: 0.15rem 0.4rem;">Rejected</span>
+                  {% elif cl.status == 'returned' %}
+                    <span class="badge badge-returned" style="font-size: 0.68rem; padding: 0.15rem 0.4rem;">Returned</span>
+                  {% else %}
+                    <span class="badge badge-pending" style="font-size: 0.68rem; padding: 0.15rem 0.4rem;">Pending</span>
+                  {% endif %}
+                  <span style="font-size: 0.75rem; color: var(--text-secondary);">
+                    {{ cl.created_at|timesince }} ago
+                  </span>
+                </div>
+                <a href="{% url 'items:detail' cl.item.pk %}" style="font-weight: 600; font-size: 0.9rem; color: var(--deep-pine); text-decoration: none; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  {{ cl.item.title }}
+                </a>
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem;">
+                  Claimant: {{ cl.claimant.username }}
+                </div>
+              </div>
+
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem; flex-shrink: 0;">
+                <a href="/admin/claims/claim/{{ cl.pk }}/change/" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" target="_blank" rel="noopener">
+                  Admin Review
+                </a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; text-align: center; padding: 2rem 0;">No claims submitted yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Report an item — belong.{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2.5rem; padding-bottom: 4rem;">
+  <div style="max-width: 680px; margin: 0 auto; background: var(--surface-white); border: 1px solid var(--border-neutral); border-radius: var(--radius-lg); padding: 2.5rem; box-shadow: var(--shadow-card);">
+    
+    <div style="margin-bottom: 2rem;">
+      <h1 style="font-size: 1.85rem; color: var(--deep-pine); margin-bottom: 0.35rem;">Report an item</h1>
+      <p style="color: var(--text-secondary); font-size: 0.95rem;">
+        Provide details so the campus community can help reconnect the item.
+      </p>
+
+      <!-- Visually Distinct Lost / Found Selection -->
+      <div style="display: flex; gap: 0.75rem; margin-top: 1.25rem;">
+        <a href="{% url 'items:create' %}?type=lost" class="btn {% if initial_type == 'lost' %}btn-primary{% else %}btn-secondary{% endif %}" style="flex: 1;">
+          I've lost something
+        </a>
+        <a href="{% url 'items:create' %}?type=found" class="btn {% if initial_type == 'found' %}btn-primary{% else %}btn-secondary{% endif %}" style="flex: 1;">
+          I've found something
+        </a>
+      </div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      {% if form.errors %}
+        <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+          Please review the highlighted fields below.
+        </div>
+      {% endif %}
+
+      <div class="form-group" style="display: none;">
+        <label class="form-label" for="id_item_type">Item type</label>
+        {{ form.item_type }}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_title">Item title *</label>
+        {{ form.title }}
+        <div class="form-help">Concise name (e.g. MacBook Pro charger, Blue Hydro Flask, Silver Keys)</div>
+        {% if form.title.errors %}<div class="form-error">{{ form.title.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="id_category">Category *</label>
+          {{ form.category }}
+          {% if form.category.errors %}<div class="form-error">{{ form.category.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_incident_date">Date lost or found *</label>
+          {{ form.incident_date }}
+          {% if form.incident_date.errors %}<div class="form-error">{{ form.incident_date.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="id_location">Campus building or zone *</label>
+          {{ form.location }}
+          {% if form.location.errors %}<div class="form-error">{{ form.location.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_specific_spot">Specific spot (Optional)</label>
+          {{ form.specific_spot }}
+          <div class="form-help">e.g. 2nd floor silent study table 14</div>
+          {% if form.specific_spot.errors %}<div class="form-error">{{ form.specific_spot.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_holding_location">Current physical custody</label>
+        {{ form.holding_location }}
+        <div class="form-help">Where is the item right now? (e.g. Finder in possession, Left at Library Reception)</div>
+        {% if form.holding_location.errors %}<div class="form-error">{{ form.holding_location.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_description">Public physical description *</label>
+        {{ form.description }}
+        <div class="form-help">Visible color, brand, approximate size, wear condition.</div>
+        {% if form.description.errors %}<div class="form-error">{{ form.description.errors.0 }}</div>{% endif %}
+      </div>
+
+      <!-- Private Details with Subtle Privacy Notice -->
+      <div class="confidential-box">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem;">
+          <label class="form-label" for="id_identifying_details" style="margin-bottom: 0;">
+            Private verification details
+          </label>
+          <span class="badge badge-found" style="font-size: 0.68rem;">Hidden from public</span>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+          Only you and authorized campus desk officers can view this. Used to confirm legitimate ownership claims (e.g. lock screen photo, internal contents, serial number).
+        </p>
+        {{ form.identifying_details }}
+        {% if form.identifying_details.errors %}<div class="form-error">{{ form.identifying_details.errors.0 }}</div>{% endif %}
+      </div>
+
+      <!-- Photo Upload Area with Image Preview -->
+      <div class="form-group">
+        <label class="form-label" for="id_image">Photograph (Optional, max 5 MB)</label>
+        {{ form.image }}
+        <div class="image-preview-box" id="id_image_preview" style="display: none; margin-top: 0.75rem;"></div>
+        {% if form.image.errors %}<div class="form-error">{{ form.image.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+        <button type="submit" class="btn btn-primary btn-lg" style="flex: 1;">
+          Publish listing
+        </button>
+        <a href="{% url 'items:index' %}" class="btn btn-secondary btn-lg">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

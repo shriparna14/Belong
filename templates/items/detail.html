@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ item.title }} — belong.{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+  <!-- Breadcrumb -->
+  <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+    <a href="{% url 'items:index' %}">All listings</a>
+    <span>&rsaquo;</span>
+    <a href="{% url 'items:index' %}?category={{ item.category.slug }}">{{ item.category.name|default:"General" }}</a>
+    <span>&rsaquo;</span>
+    <span style="color: var(--deep-pine); font-weight: 500;">{{ item.title|truncatechars:35 }}</span>
+  </div>
+
+  <div class="detail-grid">
+    <!-- Main Column -->
+    <div>
+      <div class="detail-card">
+        <!-- Media -->
+        <div class="detail-media">
+          {% if item.image %}
+            <img src="{{ item.image.url }}" alt="{{ item.title }}">
+          {% else %}
+            <div style="padding: 4rem 2rem; text-align: center; color: #8C9991;">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 0.5rem;">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+              <p style="font-size: 0.9rem;">No photograph uploaded for this item</p>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="detail-body">
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+            {% if item.item_type == 'lost' %}
+              <span class="badge badge-lost">Lost item</span>
+            {% elif item.status == 'returned' %}
+              <span class="badge badge-returned">Returned</span>
+            {% else %}
+              <span class="badge badge-found">Found item</span>
+            {% endif %}
+
+            <span class="badge badge-pending">{{ item.get_status_display }}</span>
+
+            {% if item.is_aged %}
+              <span class="badge badge-aging">Unclaimed for {{ item.days_open }} days</span>
+            {% endif %}
+          </div>
+
+          <h1 class="detail-title">{{ item.title }}</h1>
+
+          <div class="detail-meta-row">
+            <div><strong>Location:</strong> {{ item.location.name|default:"Campus" }}{% if item.specific_spot %} &bull; {{ item.specific_spot }}{% endif %}</div>
+            <div><strong>Reported:</strong> {{ item.incident_date|date:"d M Y" }}</div>
+            <div>
+              <strong>Category:</strong>
+              <span class="cat-badge cat-{{ item.category.slug|default:'other' }}" style="margin-left: 0.25rem;">
+                {{ item.category.name|default:"General" }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Public Description -->
+          <div style="margin-bottom: 2rem;">
+            <h3 style="font-size: 1.05rem; margin-bottom: 0.5rem; color: var(--deep-pine);">Description</h3>
+            <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.6; white-space: pre-line;">{{ item.description }}</p>
+          </div>
+
+          <!-- Confidential Identifying Details (Only for Reporter or Desk Admin) -->
+          {% if is_owner or is_desk %}
+            <div class="confidential-box">
+              <div style="display: flex; align-items: center; gap: 0.4rem; font-weight: 700; color: var(--deep-pine); margin-bottom: 0.35rem; font-size: 0.9rem;">
+                Private Verification Details (Visible only to you &amp; Desk Officers)
+              </div>
+              <p style="font-size: 0.88rem; color: var(--text-main);">
+                {{ item.identifying_details|default:"No confidential details provided for this item." }}
+              </p>
+            </div>
+          {% endif %}
+
+          <div style="background: var(--bg-ivory); border: 1px solid var(--border-neutral); border-radius: var(--radius-sm); padding: 1.25rem;">
+            <h4 style="font-size: 0.88rem; font-weight: 700; color: var(--deep-pine); margin-bottom: 0.35rem;">Current physical custody</h4>
+            <div style="font-size: 0.88rem; color: var(--text-secondary);">{{ item.holding_location }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Claims Management List (For Reporter or Desk) -->
+      {% if is_owner or is_desk %}
+        {% if item_claims %}
+          <div style="margin-top: 2rem; background: var(--surface-white); border: 1px solid var(--border-neutral); border-radius: var(--radius-md); padding: 1.75rem;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.25rem;">
+              <h3 style="font-size: 1.15rem; color: var(--deep-pine);">Ownership claims ({{ item_claims.count }})</h3>
+              <span style="font-size: 0.82rem; color: var(--text-secondary);">Verify proof to authorize OTP handoff</span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+              {% for cl in item_claims %}
+                <div style="border: 1px solid var(--border-neutral); border-radius: var(--radius-sm); padding: 1rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                  <div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.2rem;">
+                      <strong>{{ cl.claimant.get_full_name|default:cl.claimant.username }}</strong>
+                      <span class="badge badge-pending">{{ cl.get_status_display }}</span>
+                    </div>
+                    <div style="font-size: 0.82rem; color: var(--text-secondary);">
+                      Submitted {{ cl.created_at|date:"d M Y" }} &bull; "{{ cl.description|truncatechars:60 }}"
+                    </div>
+                  </div>
+                  <a href="{% url 'claims:detail' cl.pk %}" class="btn btn-primary btn-sm">
+                    Review claim &rarr;
+                  </a>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <!-- Side Actions Column -->
+    <div>
+      <div class="side-action-card">
+        <h3 style="font-size: 1.1rem; color: var(--deep-pine); margin-bottom: 1rem;">Listing actions</h3>
+
+        {% if item.item_type == 'found' %}
+          {% if user.is_authenticated %}
+            {% if user == item.reporter %}
+              <div style="background: var(--soft-sage); padding: 0.85rem; border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--deep-pine); margin-bottom: 1rem;">
+                You reported this found item. When someone claims it, review their proof and verify their OTP during handoff.
+              </div>
+            {% elif user_claim %}
+              <div style="background: #F4F7F5; border: 1px solid var(--border-neutral); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
+                <div style="font-size: 0.85rem; font-weight: 700; color: var(--deep-pine); margin-bottom: 0.2rem;">Your claim is filed</div>
+                <div style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Status: {{ user_claim.get_status_display }}</div>
+                <a href="{% url 'claims:detail' user_claim.pk %}" class="btn btn-secondary btn-sm btn-full">
+                  View claim &amp; OTP
+                </a>
+              </div>
+            {% elif item.status == 'returned' %}
+              <div style="background: var(--soft-sage); padding: 0.85rem; border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--deep-pine); margin-bottom: 1rem;">
+                This item has been safely reunited with its owner.
+              </div>
+            {% else %}
+              <div style="margin-bottom: 1rem;">
+                <a href="{% url 'claims:create' item.pk %}" class="btn btn-primary btn-full btn-lg">
+                  Submit Claim
+                </a>
+                <div style="background: #F4F7F5; border: 1px solid var(--border-neutral); border-radius: var(--radius-sm); padding: 0.75rem; margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
+                  <strong style="color: var(--deep-pine); display: block; margin-bottom: 0.2rem;">What happens next?</strong>
+                  The finder reviews your ownership proof. Once approved, you will receive a secure 6-digit OTP code to present at pickup.
+                </div>
+              </div>
+            {% endif %}
+          {% else %}
+            <div style="margin-bottom: 1rem;">
+              <a href="{% url 'accounts:login' %}?next={% url 'items:detail' item.pk %}" class="btn btn-primary btn-full">
+                Sign in to claim
+              </a>
+              <div style="font-size: 0.78rem; color: var(--text-secondary); text-align: center; margin-top: 0.4rem;">
+                Campus account required to file a claim
+              </div>
+            </div>
+          {% endif %}
+        {% else %}
+          <div style="background: #FDF1ED; border: 1px solid #F5D6CC; padding: 0.85rem; border-radius: var(--radius-sm); font-size: 0.85rem; color: #7A2E1A; margin-bottom: 1rem;">
+            This is a <strong>Lost Item Report</strong>. If you have found this item, please report it as Found.
+          </div>
+          <a href="{% url 'items:create' %}?type=found" class="btn btn-sage btn-full" style="margin-bottom: 1rem;">
+            Report as found
+          </a>
+        {% endif %}
+
+        {% if is_owner or is_desk %}
+          <div style="padding-top: 1rem; border-top: 1px solid var(--border-neutral); display: flex; flex-direction: column; gap: 0.5rem;">
+            <a href="{% url 'items:edit' item.pk %}" class="btn btn-secondary btn-sm btn-full">
+              Edit listing
+            </a>
+            <a href="{% url 'items:delete' item.pk %}" class="btn btn-outline btn-sm btn-full" style="color: var(--muted-clay);" onclick="return confirm('Are you sure you want to delete this listing?');">
+              Delete listing
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

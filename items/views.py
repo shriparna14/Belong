@@ -99,12 +99,22 @@ def item_detail_view(request, pk):
         if is_owner or is_desk:
             item_claims = Claim.objects.filter(item=item).order_by('-created_at')
 
+    # Matching suggestions between lost and found reports (Member 2)
+    opposite_type = 'found' if item.item_type == 'lost' else 'lost'
+    matches = Item.objects.filter(
+        item_type=opposite_type,
+        status='active'
+    ).filter(
+        Q(category=item.category) | Q(location=item.location)
+    ).exclude(pk=item.pk)[:4]
+
     context = {
         'item': item,
         'user_claim': user_claim,
         'item_claims': item_claims,
         'is_owner': is_owner,
         'is_desk': is_desk,
+        'matches': matches,
     }
     return render(request, 'items/detail.html', context)
 

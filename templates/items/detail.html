@@ -184,6 +184,24 @@
           </div>
         {% endif %}
       </div>
+
+      {% if matches %}
+      <div class="detail-card" style="margin-top: 1.5rem;">
+        <h3 style="font-size: 1.05rem; color: var(--deep-pine); margin-bottom: 0.25rem;">Matching Suggestions</h3>
+        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">Opposite reports matching this item's category or location.</p>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          {% for match in matches %}
+            <a href="{% url 'items:detail' match.pk %}" style="text-decoration: none; padding: 0.75rem; border: 1px solid var(--border-neutral); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center; background: #fff;">
+              <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px;">
+                <strong style="font-size: 0.85rem; color: var(--deep-pine); display: block; overflow: hidden; text-overflow: ellipsis;">{{ match.title }}</strong>
+                <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ match.location.name|default:'Campus' }}</span>
+              </div>
+              <span class="badge {% if match.item_type == 'lost' %}badge-lost{% else %}badge-found{% endif %}" style="font-size: 0.7rem;">{{ match.get_item_type_display }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
     </div>
   </div>
 </div>

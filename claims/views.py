@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.utils import timezone
 from django.urls import reverse
 from .models import Claim, HandoffOTP, HandoffAuditLog
+from .emails import send_otp_email
 from .forms import ClaimForm, OTPVerificationForm
 from items.models import Item
 from accounts.models import Notification
@@ -119,6 +120,7 @@ def review_claim_view(request, pk):
 
             # Generate OTP for claimant
             otp = HandoffOTP.generate_for_claim(claim)
+            send_otp_email(claim, otp.otp_code)
             
             # Notify claimant
             Notification.objects.create(
@@ -252,5 +254,6 @@ def regenerate_otp_view(request, pk):
         return redirect('claims:detail', pk=claim.pk)
 
     otp = HandoffOTP.generate_for_claim(claim)
-    messages.success(request, f"A fresh OTP ({otp.otp_code}) has been generated with a new validity window.")
+    send_otp_email(claim, otp.otp_code)
+    messages.success(request, f"A fresh OTP ({otp.otp_code}) has been generated and sent to {claim.claimant.email or claim.claimant.username}.")
     return redirect('claims:detail', pk=claim.pk)

@@ -185,6 +185,19 @@
         {% endif %}
       </div>
 
+      {% if qr_code_data %}
+      <div class="detail-card" style="margin-top: 1.5rem; text-align: center;">
+        <h3 style="font-size: 1rem; color: var(--deep-pine); margin-bottom: 0.25rem;">Intake QR Badge</h3>
+        <p style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Scan on mobile or print for locker / storage box.</p>
+        <img src="{{ qr_code_data }}" alt="Item QR Code" style="width: 130px; height: 130px; border-radius: var(--radius-sm); border: 1px solid var(--border-neutral); padding: 4px; background: #fff;">
+        <div style="margin-top: 0.5rem;">
+          <button onclick="window.print();" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.3rem 0.6rem;">
+            Print Label
+          </button>
+        </div>
+      </div>
+      {% endif %}
+
       {% if matches %}
       <div class="detail-card" style="margin-top: 1.5rem;">
         <h3 style="font-size: 1.05rem; color: var(--deep-pine); margin-bottom: 0.25rem;">Matching Suggestions</h3>

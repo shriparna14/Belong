@@ -4,10 +4,12 @@ from django.contrib import messages
 from django.db.models import Q
 from django.core.paginator import Paginator
 from django.conf import settings
+from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta
 from .models import Item, Category, CampusLocation
 from .forms import ItemForm
+from .utils import generate_qr_code_base64
 from claims.models import Claim
 
 
@@ -99,6 +101,10 @@ def item_detail_view(request, pk):
         if is_owner or is_desk:
             item_claims = Claim.objects.filter(item=item).order_by('-created_at')
 
+    # Generate QR code URL for mobile intake badge
+    qr_url = request.build_absolute_uri(reverse('items:detail', args=[item.pk]))
+    qr_code_data = generate_qr_code_base64(qr_url)
+
     # Matching suggestions between lost and found reports (Member 2)
     opposite_type = 'found' if item.item_type == 'lost' else 'lost'
     matches = Item.objects.filter(
@@ -115,6 +121,7 @@ def item_detail_view(request, pk):
         'is_owner': is_owner,
         'is_desk': is_desk,
         'matches': matches,
+        'qr_code_data': qr_code_data,
     }
     return render(request, 'items/detail.html', context)
 

@@ -48,6 +48,14 @@ def index_view(request):
     if location_id:
         items = items.filter(location_id=location_id)
 
+    # Date range filters (Member 2)
+    date_from = request.GET.get('date_from', '').strip()
+    date_to = request.GET.get('date_to', '').strip()
+    if date_from:
+        items = items.filter(incident_date__gte=date_from)
+    if date_to:
+        items = items.filter(incident_date__lte=date_to)
+
     # Aging filter
     aging = request.GET.get('aging', '')
     if aging == '1':
@@ -68,7 +76,7 @@ def index_view(request):
     page_obj = paginator.get_page(page_number)
 
     # Check if any filter is active
-    has_filters = bool(query or item_type or category_slug or location_id or (aging == '1') or (sort_by != 'newest'))
+    has_filters = bool(query or item_type or category_slug or location_id or date_from or date_to or (aging == '1') or (sort_by != 'newest'))
 
     # Recently added items for the showcase
     recently_added = Item.objects.select_related('category', 'location').exclude(status='archived').order_by('-created_at')[:4]
@@ -81,10 +89,13 @@ def index_view(request):
         'current_type': item_type,
         'current_category': category_slug,
         'current_location': location_id,
+        'current_date_from': date_from,
+        'current_date_to': date_to,
         'current_sort': sort_by,
         'current_aging': aging,
     }
     return render(request, 'items/index.html', context)
+
 
 
 def item_detail_view(request, pk):
@@ -107,12 +118,28 @@ def item_detail_view(request, pk):
 
     # Matching suggestions between lost and found reports (Member 2)
     opposite_type = 'found' if item.item_type == 'lost' else 'lost'
-    matches = Item.objects.filter(
+    match_candidates = Item.objects.filter(
         item_type=opposite_type,
         status='active'
-    ).filter(
-        Q(category=item.category) | Q(location=item.location)
-    ).exclude(pk=item.pk)[:4]
+    ).exclude(pk=item.pk)
+
+    # Score candidates: same category (+2), same location (+1), incident date within 7 days (+1)
+    matching_items = []
+    for cand in match_candidates.select_related('category', 'location')[:25]:
+        score = 0
+        if cand.category_id and cand.category_id == item.category_id:
+            score += 2
+        if cand.location_id and cand.location_id == item.location_id:
+            score += 1
+        if abs((cand.incident_date - item.incident_date).days) <= 7:
+            score += 1
+
+        if score > 0:
+            matching_items.append((score, cand))
+
+    matching_items.sort(key=lambda x: x[0], reverse=True)
+    matches = [m[1] for m in matching_items[:4]]
+
 
     context = {
         'item': item,
@@ -184,6 +211,43 @@ def item_delete_view(request, pk):
     return render(request, 'items/confirm_delete.html', {'item': item})
 
 
+@login_required
+def item_resolve_view(request, pk):
+    item = get_object_or_404(Item, pk=pk)
+    is_desk = request.user.is_staff or getattr(getattr(request.user, 'profile', None), 'role', '') == 'desk_admin'
+
+    if item.reporter != request.user and not is_desk:
+        messages.error(request, "You are not authorized to update this listing.")
+        return redirect('items:detail', pk=item.pk)
+
+    if request.method == 'POST':
+        item.status = 'returned'
+        item.save()
+        messages.success(request, f"'{item.title}' has been marked as resolved and reunited with owner!")
+    return redirect('items:detail', pk=item.pk)
+
+
+@login_required
+def item_dispose_view(request, pk):
+    item = get_object_or_404(Item, pk=pk)
+    is_desk = request.user.is_staff or getattr(getattr(request.user, 'profile', None), 'role', '') == 'desk_admin'
+
+    if not is_desk:
+        messages.error(request, "Only Campus Desk Officers or Administrators can record item disposal.")
+        return redirect('items:detail', pk=item.pk)
+
+    if request.method == 'POST':
+        action_type = request.POST.get('disposal_action', 'Disposed / Recycled')
+        notes = request.POST.get('disposal_notes', '').strip()
+        item.status = 'archived'
+        item.holding_location = f"Archived: {action_type} - {notes}" if notes else f"Archived: {action_type}"
+        item.save()
+        messages.success(request, f"Item #{item.pk} ({item.title}) has been safely archived/disposed: {action_type}.")
+        return redirect('items:desk')
+
+    return redirect('items:desk')
+
+
 def campus_desk_view(request):
     threshold_days = getattr(settings, 'ITEM_AGING_DAYS_THRESHOLD', 30)
     cutoff_date = timezone.now() - timedelta(days=threshold_days)
@@ -195,11 +259,14 @@ def campus_desk_view(request):
 
     handoff_ready_items = Item.objects.filter(status='handoff_ready').select_related('category', 'location', 'reporter')
     recent_returned = Item.objects.filter(status='returned').order_by('-updated_at')[:10]
+    archived_items = Item.objects.filter(status='archived').order_by('-updated_at')[:10]
 
     context = {
         'aged_items': aged_items,
         'handoff_ready_items': handoff_ready_items,
         'recent_returned': recent_returned,
+        'archived_items': archived_items,
         'threshold_days': threshold_days,
     }
     return render(request, 'items/campus_desk.html', context)
+

@@ -4,7 +4,8 @@ from items.models import Item
 from claims.models import HandoffAuditLog
 
 def export_items_csv_view(request):
-    if not request.user.is_authenticated or not request.user.is_staff:
+    is_desk = request.user.is_staff or getattr(getattr(request.user, 'profile', None), 'role', '') == 'desk_admin'
+    if not request.user.is_authenticated or not is_desk:
         return HttpResponse("Unauthorized", status=403)
 
     response = HttpResponse(content_type='text/csv')
@@ -34,7 +35,8 @@ def export_items_csv_view(request):
     return response
 
 def export_audit_logs_csv_view(request):
-    if not request.user.is_authenticated or not request.user.is_staff:
+    is_desk = request.user.is_staff or getattr(getattr(request.user, 'profile', None), 'role', '') == 'desk_admin'
+    if not request.user.is_authenticated or not is_desk:
         return HttpResponse("Unauthorized", status=403)
 
     response = HttpResponse(content_type='text/csv')
@@ -42,20 +44,20 @@ def export_audit_logs_csv_view(request):
 
     writer = csv.writer(response)
     writer.writerow([
-        'Log ID', 'Action', 'Item Title', 'Claimant', 'Verified By', 'Signature', 'Notes', 'Timestamp'
+        'Log ID', 'Item Title', 'Claim ID', 'Returned To', 'Confirmed By', 'Notes', 'Handoff Date'
     ])
 
-    logs = HandoffAuditLog.objects.select_related('claim__item', 'claim__claimant', 'verified_by').all().order_by('-timestamp')
+    logs = HandoffAuditLog.objects.select_related('item', 'claim', 'returned_to', 'confirmed_by').all().order_by('-handoff_date')
     for log in logs:
         writer.writerow([
             log.id,
-            log.get_action_display(),
-            log.claim.item.title if log.claim and log.claim.item else '',
-            log.claim.claimant.username if log.claim and log.claim.claimant else '',
-            log.verified_by.username if log.verified_by else '',
-            log.receiver_signature or '',
+            log.item.title if log.item else '',
+            log.claim.id if log.claim else '',
+            log.returned_to.username if log.returned_to else '',
+            log.confirmed_by.username if log.confirmed_by else '',
             log.notes or '',
-            log.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+            log.handoff_date.strftime('%Y-%m-%d %H:%M:%S'),
         ])
 
     return response
+

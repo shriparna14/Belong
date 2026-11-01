@@ -57,9 +57,20 @@
                 <td><span style="color: var(--muted-clay); font-weight: 700;">{{ it.days_open }}d</span></td>
                 <td>{{ it.holding_location }}</td>
                 <td>
-                  <div style="display: flex; gap: 0.4rem;">
+                  <div style="display: flex; gap: 0.4rem; align-items: center;">
                     <a href="{% url 'items:detail' it.pk %}" class="btn btn-outline btn-sm">Review</a>
                     <a href="{% url 'items:edit' it.pk %}" class="btn btn-secondary btn-sm">Custody</a>
+                    <form method="POST" action="{% url 'items:dispose' it.pk %}" style="display: inline-flex; gap: 0.3rem;">
+                      {% csrf_token %}
+                      <select name="disposal_action" class="form-select" style="font-size: 0.75rem; padding: 0.2rem 0.4rem;">
+                        <option value="Donated to Campus Charity">Donate</option>
+                        <option value="Recycled / Safely Disposed">Recycle</option>
+                        <option value="Transferred to Campus Police">Police Transfer</option>
+                      </select>
+                      <button type="submit" class="btn btn-sm btn-outline" style="color: var(--muted-clay); font-size: 0.75rem;" onclick="return confirm('Archive and record disposal of this aged item?');">
+                        Archive
+                      </button>
+                    </form>
                   </div>
                 </td>
               </tr>
@@ -73,6 +84,44 @@
       </div>
     {% endif %}
   </div>
+
+  <!-- Archived / Disposed History (Member 3) -->
+  {% if archived_items %}
+  <div style="background: var(--surface-white); border: 1px solid var(--border-neutral); border-radius: var(--radius-md); padding: 1.75rem; margin-bottom: 2.5rem; box-shadow: var(--shadow-subtle);">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1.25rem;">
+      <h2 style="font-size: 1.25rem; color: var(--deep-pine);">
+        Recent Disposed &amp; Archived Inventory Records
+      </h2>
+      <span class="badge badge-returned">{{ archived_items.count }} archived</span>
+    </div>
+
+    <div style="overflow-x: auto;">
+      <table class="desk-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Category</th>
+            <th>Original Location</th>
+            <th>Archival / Disposal Details</th>
+            <th>Archived Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for arc in archived_items %}
+            <tr>
+              <td><strong><a href="{% url 'items:detail' arc.pk %}">{{ arc.title }}</a></strong></td>
+              <td>{{ arc.category.name|default:"-" }}</td>
+              <td>{{ arc.location.name|default:"Campus" }}</td>
+              <td><span style="font-size: 0.85rem; color: var(--text-main);">{{ arc.holding_location }}</span></td>
+              <td><span style="font-size: 0.82rem; color: var(--text-secondary);">{{ arc.updated_at|date:"d M Y H:i" }}</span></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
 
   <!-- Ready for Handoff -->
   <div style="background: var(--surface-white); border: 1px solid var(--border-neutral); border-radius: var(--radius-md); padding: 1.75rem; box-shadow: var(--shadow-subtle);">

@@ -284,11 +284,24 @@ img {
   border: 1px solid #F6ECC9;
 }
 
+.badge-approved {
+  background: #EFF5F1;
+  color: var(--muted-green);
+  border: 1px solid #D7E6DB;
+}
+
+.badge-rejected {
+  background: #FDF1ED;
+  color: var(--muted-clay);
+  border: 1px solid #F5D6CC;
+}
+
 .badge-aging {
   background: #FDF6E2;
   color: #A16207;
   border: 1px solid #F8E7AD;
 }
+
 
 /* ============================================================
    Homepage Hero & Search Section

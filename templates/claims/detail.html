@@ -21,8 +21,17 @@
           <h1 style="font-size: 1.6rem; color: var(--deep-pine);">
             Claim on "{{ item.title }}"
           </h1>
-          <span class="badge badge-pending">{{ claim.get_status_display }}</span>
+          {% if claim.status == 'approved' %}
+            <span class="badge badge-approved">{{ claim.get_status_display }}</span>
+          {% elif claim.status == 'rejected' %}
+            <span class="badge badge-rejected">{{ claim.get_status_display }}</span>
+          {% elif claim.status == 'completed' %}
+            <span class="badge badge-returned">{{ claim.get_status_display }}</span>
+          {% else %}
+            <span class="badge badge-pending">{{ claim.get_status_display }}</span>
+          {% endif %}
         </div>
+
 
         <div style="display: flex; gap: 1rem; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem;">
           <div>Claimant: <strong>{{ claim.claimant.get_full_name|default:claim.claimant.username }}</strong></div>
@@ -60,18 +69,30 @@
           </div>
         {% endif %}
 
+        {% if claim.status == 'rejected' %}
+          <div style="background: #FDF1ED; border: 1px solid #F5D6CC; border-radius: var(--radius-sm); padding: 1.5rem; text-align: center;">
+            <h3 style="font-size: 1.15rem; color: #7A2E1A; margin-bottom: 0.25rem;">
+              Claim Not Approved
+            </h3>
+            <p style="font-size: 0.88rem; color: var(--text-secondary);">
+              This claim has been evaluated and was not approved. Check the review feedback above for details.
+            </p>
+          </div>
+        {% endif %}
+
         {% if claim.status == 'completed' %}
           <div style="background: var(--soft-sage); border: 1px solid #C4D2C4; border-radius: var(--radius-sm); padding: 1.5rem; text-align: center;">
             <h3 style="font-size: 1.2rem; color: var(--deep-pine); margin-bottom: 0.25rem;">
               Handoff Completed &amp; Reunited
             </h3>
             <p style="font-size: 0.88rem; color: var(--text-secondary);">
-              The 6-digit OTP code was verified in person. The item is safely returned to its owner.
+              The item has been safely returned and custody handoff was confirmed.
             </p>
           </div>
         {% endif %}
       </div>
     </div>
+
 
     <!-- Right Column: OTP Interaction & Review Workflow -->
     <div>
@@ -141,9 +162,9 @@
 
         <!-- OTP Verification Form -->
         {% if claim.status == 'approved' and verify_form %}
-          <div style="background: var(--surface-white); border: 1px solid var(--deep-pine); border-radius: var(--radius-md); padding: 1.5rem;">
+          <div style="background: var(--surface-white); border: 1px solid var(--deep-pine); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.25rem;">
             <h3 style="font-size: 1.1rem; color: var(--deep-pine); margin-bottom: 0.4rem;">
-              Verify in-person OTP
+              Option A: Verify in-person OTP
             </h3>
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
               Ask claimant for their 6-digit code before handing over the item.
@@ -162,12 +183,40 @@
               </div>
 
               <button type="submit" class="btn btn-primary btn-full btn-lg">
-                Confirm handoff
+                Confirm OTP handoff
+              </button>
+            </form>
+          </div>
+
+          <!-- Signature Confirmation Alternative (Member 3) -->
+          <div style="background: var(--surface-white); border: 1px solid var(--border-neutral); border-radius: var(--radius-md); padding: 1.5rem;">
+            <h3 style="font-size: 1rem; color: var(--deep-pine); margin-bottom: 0.4rem;">
+              Option B: Signature Confirmation
+            </h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 1rem;">
+              If claimant cannot access email/phone, confirm identity via student card &amp; record their signed confirmation.
+            </p>
+
+            <form method="POST" action="{% url 'claims:verify_signature' claim.pk %}">
+              {% csrf_token %}
+              <div class="form-group">
+                <label class="form-label">Recipient Full Name / Signature</label>
+                <input type="text" name="signer_name" value="{{ claim.claimant.get_full_name|default:claim.claimant.username }}" required class="form-input" placeholder="Claimant full name as per student card">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Signature / ID Notes</label>
+                <input type="text" name="signature_notes" class="form-input" placeholder="e.g. Physically verified with College ID card #STU-1029">
+              </div>
+
+              <button type="submit" class="btn btn-secondary btn-full" onclick="return confirm('Confirm item returned to owner via signature record?');">
+                Sign &amp; Complete Handoff
               </button>
             </form>
           </div>
         {% endif %}
       {% endif %}
+
     </div>
   </div>
 </div>

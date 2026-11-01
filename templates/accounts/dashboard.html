@@ -31,7 +31,11 @@
     <a href="?tab=claims" class="filter-pill {% if active_tab == 'claims' %}active{% endif %}">
       My claims ({{ my_claims.count }})
     </a>
+    <a href="?tab=matches" class="filter-pill {% if active_tab == 'matches' %}active{% endif %}">
+      Potential matches ({{ user_item_matches|length }})
+    </a>
   </div>
+
 
   <!-- TAB 1: My Reported Items -->
   {% if active_tab == 'items' %}
@@ -161,5 +165,65 @@
       </div>
     {% endif %}
   {% endif %}
+
+  <!-- TAB 4: Potential Matches (Member 2) -->
+  {% if active_tab == 'matches' %}
+    {% if user_item_matches %}
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        {% for match_group in user_item_matches %}
+          <div style="background: var(--surface-white); border: 1px solid var(--border-neutral); border-radius: var(--radius-md); padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; border-bottom: 1px solid var(--border-neutral); padding-bottom: 0.75rem;">
+              <div>
+                <span class="badge {% if match_group.item.item_type == 'lost' %}badge-lost{% else %}badge-found{% endif %}" style="margin-right: 0.5rem;">
+                  Your {{ match_group.item.get_item_type_display }}
+                </span>
+                <strong style="color: var(--deep-pine); font-size: 1.1rem;">
+                  <a href="{% url 'items:detail' match_group.item.pk %}">{{ match_group.item.title }}</a>
+                </strong>
+                <span style="font-size: 0.85rem; color: var(--text-secondary); margin-left: 0.5rem;">
+                  ({{ match_group.item.location.name|default:'Campus' }} &bull; {{ match_group.item.category.name|default:'General' }})
+                </span>
+              </div>
+            </div>
+
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--deep-pine); margin-bottom: 0.75rem;">
+              Possible Matches Discovered On Campus:
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+              {% for cand in match_group.candidates %}
+                <div style="background: var(--bg-ivory); border: 1px solid var(--border-neutral); border-radius: var(--radius-sm); padding: 1rem; display: flex; flex-direction: column; justify-content: space-between;">
+                  <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                      <span class="badge {% if cand.item_type == 'lost' %}badge-lost{% else %}badge-found{% endif %}">
+                        {{ cand.get_item_type_display }}
+                      </span>
+                      <span style="font-size: 0.75rem; color: var(--text-secondary);">
+                        {{ cand.incident_date|date:"d M Y" }}
+                      </span>
+                    </div>
+                    <h4 style="font-size: 0.95rem; margin-bottom: 0.35rem;">
+                      <a href="{% url 'items:detail' cand.pk %}">{{ cand.title }}</a>
+                    </h4>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 0.75rem;">
+                      {{ cand.description|truncatechars:80 }}
+                    </p>
+                  </div>
+                  <a href="{% url 'items:detail' cand.pk %}" class="btn btn-primary btn-sm btn-full">
+                    View matching item &rarr;
+                  </a>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="background: var(--surface-white); border: 1px dashed var(--border-neutral); border-radius: var(--radius-md); padding: 3rem 2rem; text-align: center;">
+        <p style="color: var(--text-secondary);">No matching items found for your active reports right now. Check back as new reports arrive!</p>
+      </div>
+    {% endif %}
+  {% endif %}
 </div>
 {% endblock %}
+

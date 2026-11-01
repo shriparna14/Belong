@@ -175,6 +175,14 @@
 
         {% if is_owner or is_desk %}
           <div style="padding-top: 1rem; border-top: 1px solid var(--border-neutral); display: flex; flex-direction: column; gap: 0.5rem;">
+            {% if item.status != 'returned' and item.status != 'archived' %}
+              <form method="POST" action="{% url 'items:resolve' item.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary btn-sm btn-full" onclick="return confirm('Mark this item as resolved/reunited?');">
+                  &check; Mark as resolved / reunited
+                </button>
+              </form>
+            {% endif %}
             <a href="{% url 'items:edit' item.pk %}" class="btn btn-secondary btn-sm btn-full">
               Edit listing
             </a>
@@ -184,6 +192,7 @@
           </div>
         {% endif %}
       </div>
+
 
       {% if qr_code_data %}
       <div class="detail-card" style="margin-top: 1.5rem; text-align: center;">

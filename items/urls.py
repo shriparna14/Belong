@@ -9,5 +9,8 @@ urlpatterns = [
     path('report/', views.item_create_view, name='create'),
     path('item/<int:pk>/edit/', views.item_edit_view, name='edit'),
     path('item/<int:pk>/delete/', views.item_delete_view, name='delete'),
+    path('item/<int:pk>/resolve/', views.item_resolve_view, name='resolve'),
+    path('item/<int:pk>/dispose/', views.item_dispose_view, name='dispose'),
     path('desk/', views.campus_desk_view, name='desk'),
 ]
+

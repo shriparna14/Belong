@@ -238,6 +238,67 @@ def verify_otp_view(request, pk):
 
 
 @login_required
+def verify_signature_view(request, pk):
+    claim = get_object_or_404(Claim, pk=pk)
+    user = request.user
+    is_finder = (claim.item.reporter == user)
+    is_desk = user.is_staff or getattr(getattr(user, 'profile', None), 'role', '') == 'desk_admin'
+
+    if not (is_finder or is_desk):
+        messages.error(request, "You are not authorized to verify handoff.")
+        return redirect('claims:detail', pk=claim.pk)
+
+    if request.method == 'POST':
+        signer_name = request.POST.get('signer_name', '').strip()
+        signature_notes = request.POST.get('signature_notes', '').strip()
+
+        if not signer_name:
+            messages.error(request, "Recipient signature / confirmed name is required.")
+            return redirect('claims:detail', pk=claim.pk)
+
+        # Mark OTP as used if it exists
+        otp = getattr(claim, 'handoff_otp', None)
+        if otp:
+            otp.is_used = True
+            otp.verified_at = timezone.now()
+            otp.verified_by = user
+            otp.save()
+
+        claim.status = 'completed'
+        claim.save()
+
+        claim.item.status = 'returned'
+        claim.item.save()
+
+        # Record audit log
+        audit_note = f"Physical signature handoff confirmed by {signer_name}."
+        if signature_notes:
+            audit_note += f" Notes: {signature_notes}"
+
+        HandoffAuditLog.objects.create(
+            item=claim.item,
+            claim=claim,
+            returned_to=claim.claimant,
+            confirmed_by=user,
+            notes=audit_note
+        )
+
+        Notification.objects.create(
+            recipient=claim.claimant,
+            title="Item Reunited!",
+            message=f"'{claim.item.title}' was verified via signed confirmation and returned to you.",
+            notification_type='item_returned',
+            link=reverse('items:detail', args=[claim.item.pk])
+        )
+
+        messages.success(request, f"🎉 Signature Verified! '{claim.item.title}' has been officially returned to {signer_name}.")
+        return redirect('claims:detail', pk=claim.pk)
+
+    return redirect('claims:detail', pk=claim.pk)
+
+
+@login_required
+
 def regenerate_otp_view(request, pk):
     claim = get_object_or_404(Claim, pk=pk)
     user = request.user

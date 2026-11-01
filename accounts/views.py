@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import Q
 from .forms import CampusRegistrationForm, ProfileUpdateForm, EmailOrUsernameAuthenticationForm
 from items.models import Item
 from claims.models import Claim
@@ -82,13 +83,32 @@ def dashboard_view(request):
     my_claims = Claim.objects.filter(claimant=user).order_by('-created_at')
     incoming_claims = Claim.objects.filter(item__reporter=user).exclude(claimant=user).order_by('-created_at')
 
+    # Compute potential matches for active items reported by user (Member 2)
+    user_item_matches = []
+    active_user_items = my_reported_items.filter(status='active')
+    for u_item in active_user_items:
+        opposite_type = 'found' if u_item.item_type == 'lost' else 'lost'
+        candidates = Item.objects.filter(
+            item_type=opposite_type,
+            status='active'
+        ).exclude(reporter=user).filter(
+            Q(category=u_item.category) | Q(location=u_item.location)
+        )[:3]
+        if candidates.exists():
+            user_item_matches.append({
+                'item': u_item,
+                'candidates': candidates
+            })
+
     context = {
         'my_reported_items': my_reported_items,
         'my_claims': my_claims,
         'incoming_claims': incoming_claims,
+        'user_item_matches': user_item_matches,
         'active_tab': request.GET.get('tab', 'items')
     }
     return render(request, 'accounts/dashboard.html', context)
+
 
 
 @login_required
@@ -116,8 +136,9 @@ def mark_all_notifications_read_view(request):
 
 @login_required
 def admin_dashboard_view(request):
-    if not request.user.is_staff:
-        messages.error(request, "Staff authorization required to access the admin dashboard.")
+    is_desk = request.user.is_staff or getattr(getattr(request.user, 'profile', None), 'role', '') == 'desk_admin'
+    if not is_desk:
+        messages.error(request, "Staff or Lost & Found Desk authorization required to access the admin dashboard.")
         return redirect('items:index')
 
     from django.contrib.auth.models import User

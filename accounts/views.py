@@ -80,6 +80,12 @@ def profile_view(request):
 def dashboard_view(request):
     user = request.user
     my_reported_items = Item.objects.filter(reporter=user).order_by('-created_at')
+    all_lost_items = Item.objects.filter(
+        item_type='lost',
+        status__in=['active', 'claim_pending']
+    ).select_related(
+        'category', 'location', 'reporter'
+    ).order_by('-created_at')
     my_claims = Claim.objects.filter(claimant=user).order_by('-created_at')
     incoming_claims = Claim.objects.filter(item__reporter=user).exclude(claimant=user).order_by('-created_at')
 
@@ -102,6 +108,7 @@ def dashboard_view(request):
 
     context = {
         'my_reported_items': my_reported_items,
+        'all_lost_items': all_lost_items,
         'my_claims': my_claims,
         'incoming_claims': incoming_claims,
         'user_item_matches': user_item_matches,

@@ -40,6 +40,7 @@ def create_or_save_user_profile(sender, instance, created, **kwargs):
 class Notification(models.Model):
     NOTIFICATION_TYPES = [
         ('claim_submitted', 'Claim Submitted'),
+        ('matching_found_report', 'Matching Found Report'),
         ('claim_approved', 'Claim Approved'),
         ('claim_rejected', 'Claim Rejected'),
         ('item_returned', 'Item Returned'),

@@ -84,3 +84,70 @@ class ClaimsAndOTPEndToEndTests(TestCase):
         self.assertIsNotNone(log)
         self.assertEqual(log.returned_to, self.claimant)
         self.assertEqual(log.confirmed_by, self.finder)
+
+    def create_pending_claim(self):
+        return Claim.objects.create(
+            item=self.item,
+            claimant=self.claimant,
+            description='Ownership details for the item.',
+        )
+
+    def test_claim_workflow_rejects_invalid_state_transitions(self):
+        pending_claim = self.create_pending_claim()
+
+        self.client.login(username='finder_jane', password='pass123')
+        response = self.client.post(
+            reverse('claims:verify_otp', args=[pending_claim.pk]),
+            {'otp_code': '123456'},
+        )
+        self.assertRedirects(response, reverse('claims:detail', args=[pending_claim.pk]))
+        pending_claim.refresh_from_db()
+        self.assertEqual(pending_claim.status, 'pending')
+
+        response = self.client.post(
+            reverse('claims:verify_signature', args=[pending_claim.pk]),
+            {'signer_name': 'Owner Bob'},
+        )
+        self.assertRedirects(response, reverse('claims:detail', args=[pending_claim.pk]))
+        pending_claim.refresh_from_db()
+        self.assertEqual(pending_claim.status, 'pending')
+
+        response = self.client.post(
+            reverse('claims:review', args=[pending_claim.pk]),
+            {'action': 'invalid'},
+        )
+        self.assertRedirects(response, reverse('claims:detail', args=[pending_claim.pk]))
+        pending_claim.refresh_from_db()
+        self.assertEqual(pending_claim.status, 'pending')
+
+    def test_signature_handoff_completes_once(self):
+        claim = self.create_pending_claim()
+        self.client.login(username='finder_jane', password='pass123')
+        self.client.post(
+            reverse('claims:review', args=[claim.pk]),
+            {'action': 'approve', 'review_notes': 'Verified evidence.'},
+        )
+
+        response = self.client.post(
+            reverse('claims:verify_signature', args=[claim.pk]),
+            {'signer_name': 'Owner Bob', 'signature_notes': 'ID checked.'},
+        )
+        self.assertRedirects(response, reverse('claims:detail', args=[claim.pk]))
+        claim.refresh_from_db()
+        self.item.refresh_from_db()
+        self.assertEqual(claim.status, 'completed')
+        self.assertEqual(self.item.status, 'returned')
+        self.assertEqual(HandoffAuditLog.objects.filter(claim=claim).count(), 1)
+
+        self.client.post(
+            reverse('claims:verify_signature', args=[claim.pk]),
+            {'signer_name': 'Owner Bob'},
+        )
+        self.assertEqual(HandoffAuditLog.objects.filter(claim=claim).count(), 1)
+
+    def test_otp_regeneration_requires_post_and_approved_claim(self):
+        claim = self.create_pending_claim()
+        self.client.login(username='finder_jane', password='pass123')
+        response = self.client.get(reverse('claims:regenerate_otp', args=[claim.pk]))
+        self.assertRedirects(response, reverse('claims:detail', args=[claim.pk]))
+        self.assertFalse(HandoffOTP.objects.filter(claim=claim).exists())

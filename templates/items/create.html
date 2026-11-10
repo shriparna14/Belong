@@ -12,15 +12,18 @@
         Provide details so the campus community can help reconnect the item.
       </p>
 
-      <!-- Visually Distinct Lost / Found Selection -->
+      <!-- Choose whether you are reporting a missing item or an item you recovered -->
       <div style="display: flex; gap: 0.75rem; margin-top: 1.25rem;">
         <a href="{% url 'items:create' %}?type=lost" class="btn {% if initial_type == 'lost' %}btn-primary{% else %}btn-secondary{% endif %}" style="flex: 1;">
-          I've lost something
+          I lost an item
         </a>
         <a href="{% url 'items:create' %}?type=found" class="btn {% if initial_type == 'found' %}btn-primary{% else %}btn-secondary{% endif %}" style="flex: 1;">
-          I've found something
+          I found an item
         </a>
       </div>
+      <p style="color: var(--text-secondary); font-size: 0.82rem; margin-top: 0.65rem;">
+        Choose <strong>Lost</strong> if you are searching for your item. Choose <strong>Found</strong> if you have recovered someone else's item.
+      </p>
     </div>
 
     <form method="POST" enctype="multipart/form-data">
@@ -52,7 +55,9 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="id_incident_date">Date lost or found *</label>
+          <label class="form-label" for="id_incident_date">
+            {% if initial_type == 'lost' %}Date item was lost{% else %}Date item was found{% endif %} *
+          </label>
           {{ form.incident_date }}
           {% if form.incident_date.errors %}<div class="form-error">{{ form.incident_date.errors.0 }}</div>{% endif %}
         </div>

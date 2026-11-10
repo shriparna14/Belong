@@ -35,10 +35,10 @@
       <!-- Two Clear Reporting Actions -->
       <div class="hero-actions-row">
         <a href="{% url 'items:create' %}?type=lost" class="btn hero-btn-lost">
-          I've lost something
+          Report a lost item
         </a>
         <a href="{% url 'items:create' %}?type=found" class="btn hero-btn-found">
-          I've found something
+          Report a found item
         </a>
       </div>
 
@@ -178,12 +178,12 @@
       {% for item in items %}
         <article class="item-card">
           <div class="item-card-media">
-            {% if item.item_type == 'lost' %}
-              <span class="badge badge-lost item-card-badge">Lost</span>
-            {% elif item.status == 'returned' %}
+            {% if item.status == 'returned' %}
               <span class="badge badge-returned item-card-badge">Returned</span>
+            {% elif item.item_type == 'lost' %}
+              <span class="badge badge-lost item-card-badge">Lost report</span>
             {% else %}
-              <span class="badge badge-found item-card-badge">Found</span>
+              <span class="badge badge-found item-card-badge">Found report</span>
             {% endif %}
 
             {% if item.is_recent %}
@@ -235,19 +235,19 @@
     {% if items.has_other_pages %}
       <div class="pagination">
         {% if items.has_previous %}
-          <a href="?page={{ items.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="page-btn">&laquo; Previous</a>
+          <a href="?page={{ items.previous_page_number }}{% if pagination_query %}&{{ pagination_query }}{% endif %}" class="page-btn">&laquo; Previous</a>
         {% endif %}
 
         {% for num in items.paginator.page_range %}
           {% if items.number == num %}
             <span class="page-btn active">{{ num }}</span>
           {% elif num > items.number|add:'-3' and num < items.number|add:'3' %}
-            <a href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="page-btn">{{ num }}</a>
+            <a href="?page={{ num }}{% if pagination_query %}&{{ pagination_query }}{% endif %}" class="page-btn">{{ num }}</a>
           {% endif %}
         {% endfor %}
 
         {% if items.has_next %}
-          <a href="?page={{ items.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="page-btn">Next &raquo;</a>
+          <a href="?page={{ items.next_page_number }}{% if pagination_query %}&{{ pagination_query }}{% endif %}" class="page-btn">Next &raquo;</a>
         {% endif %}
       </div>
     {% endif %}
@@ -259,8 +259,8 @@
         No listings matched your search criteria. Check your filters or report the item directly to the campus community.
       </p>
       <div style="display: flex; gap: 0.75rem; justify-content: center;">
-        <a href="{% url 'items:create' %}?type=lost" class="btn btn-primary btn-sm">Report lost item</a>
-        <a href="{% url 'items:create' %}?type=found" class="btn btn-secondary btn-sm">Report found item</a>
+        <a href="{% url 'items:create' %}?type=lost" class="btn btn-primary btn-sm">Report a lost item</a>
+        <a href="{% url 'items:create' %}?type=found" class="btn btn-secondary btn-sm">Report a found item</a>
       </div>
     </div>
   {% endif %}

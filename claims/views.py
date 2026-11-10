@@ -102,9 +102,17 @@ def review_claim_view(request, pk):
         messages.error(request, "You are not authorized to review this claim.")
         return redirect('items:detail', pk=claim.item.pk)
 
+    if claim.status != 'pending':
+        messages.error(request, "Only pending claims can be reviewed.")
+        return redirect('claims:detail', pk=claim.pk)
+
     if request.method == 'POST':
         action = request.POST.get('action')
         notes = request.POST.get('review_notes', '').strip()
+
+        if action not in {'approve', 'reject'}:
+            messages.error(request, "Choose whether to approve or reject the claim.")
+            return redirect('claims:detail', pk=claim.pk)
 
         claim.review_notes = notes
         claim.reviewed_by = user
@@ -165,6 +173,10 @@ def verify_otp_view(request, pk):
 
     if not (is_finder or is_desk):
         messages.error(request, "You are not authorized to verify handoff.")
+        return redirect('claims:detail', pk=claim.pk)
+
+    if claim.status != 'approved':
+        messages.error(request, "Only approved claims can be completed through handoff verification.")
         return redirect('claims:detail', pk=claim.pk)
 
     if request.method == 'POST':
@@ -248,6 +260,10 @@ def verify_signature_view(request, pk):
         messages.error(request, "You are not authorized to verify handoff.")
         return redirect('claims:detail', pk=claim.pk)
 
+    if claim.status != 'approved':
+        messages.error(request, "Only approved claims can be completed through handoff verification.")
+        return redirect('claims:detail', pk=claim.pk)
+
     if request.method == 'POST':
         signer_name = request.POST.get('signer_name', '').strip()
         signature_notes = request.POST.get('signature_notes', '').strip()
@@ -312,6 +328,10 @@ def regenerate_otp_view(request, pk):
 
     if claim.status != 'approved':
         messages.error(request, "OTP can only be regenerated for approved claims.")
+        return redirect('claims:detail', pk=claim.pk)
+
+    if request.method != 'POST':
+        messages.error(request, "OTP regeneration requires a POST request.")
         return redirect('claims:detail', pk=claim.pk)
 
     otp = HandoffOTP.generate_for_claim(claim)

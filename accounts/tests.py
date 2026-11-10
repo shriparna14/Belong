@@ -1,6 +1,7 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
+from items.models import Item
 
 
 class AuthenticationViewsTests(TestCase):
@@ -90,6 +91,22 @@ class AuthenticationViewsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Activity dashboard")
 
+    def test_dashboard_shows_lost_items_reported_by_other_users(self):
+        other_user = User.objects.create_user(username='other_student', password='testpassword123')
+        Item.objects.create(
+            title='Lost campus notebook',
+            item_type='lost',
+            incident_date='2026-11-10',
+            description='Blue notebook',
+            reporter=other_user,
+        )
+
+        self.client.login(username='sam_student', password='testpassword123')
+        response = self.client.get(reverse('accounts:dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'All active lost reports')
+        self.assertContains(response, 'Lost campus notebook')
+
     def test_admin_dashboard_access_control(self):
         # Non-staff user should be redirected
         self.client.login(username='sam_student', password='testpassword123')
@@ -123,4 +140,3 @@ class AuthenticationViewsTests(TestCase):
         self.assertEqual(read_resp.status_code, 302)
         notif.refresh_from_db()
         self.assertTrue(notif.is_read)
-

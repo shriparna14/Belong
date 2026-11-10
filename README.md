@@ -52,9 +52,8 @@ Belong provides a centralized platform where users can report lost and found ite
 | :--- | :--- |
 | **Backend** | Python, Django |
 | **Frontend** | HTML5, CSS3, JavaScript |
-| **UI Framework** | Bootstrap 5 |
-| **Database** | PostgreSQL |
-| **Local Development Database** | SQLite, if enabled in configuration |
+| **UI Framework** | Custom CSS design system |
+| **Database** | PostgreSQL or SQLite, selected through environment configuration |
 | **Authentication** | Django Authentication System |
 | **Image Processing** | Pillow |
 | **Environment Configuration** | python-dotenv |
@@ -190,7 +189,7 @@ Belong/
 ├── items/             # Item reports, categories, locations, and public board
 ├── claims/            # Claims, verification, and handover workflows
 ├── config/            # Django settings and root URL configuration
-├── templates/         # HTML templates (Bootstrap 5 & custom components)
+├── templates/         # HTML templates and reusable custom components
 │   ├── accounts/
 │   ├── claims/
 │   ├── includes/
@@ -201,6 +200,7 @@ Belong/
 ├── media/             # Uploaded files at runtime (git-ignored)
 ├── requirements.txt   # Python project dependencies
 ├── .env.example       # Example environment configuration template
+├── implementation.md   # Implementation status and feature notes
 ├── manage.py          # Django management script
 └── README.md          # Project documentation
 ```
@@ -220,7 +220,7 @@ The main data entities include:
 | **Claim** | Claimant information, ownership explanation, evidence, and review status |
 | **Verification Record** | OTP or signature-related verification information |
 | **Handover Record** | Handover participants, timestamps, and relevant notes |
-| **Ageing and Disposal Record** | Records associated with unclaimed items and disposal |
+| **Ageing and Disposal Record** | Aged-item detection plus archived item status and disposal details |
 
 The schema follows the models implemented in the project. Existing models are reused rather than duplicating entities.
 
@@ -262,7 +262,7 @@ pip install -r requirements.txt
 ```
 
 ### 4. Configure environment variables
-Create a local `.env` file using `.env.example` as a reference. Update the database and application settings for your environment:
+Create a local `.env` file using `.env.example` as a reference. For local development with SQLite, set `DB_ENGINE=django.db.backends.sqlite3` and `DB_NAME=db.sqlite3`. Update the database and application settings for your environment:
 
 ```bash
 cp .env.example .env
@@ -364,6 +364,9 @@ Testing covers the responsibilities of all three members:
 - Signature confirmation, if implemented.
 - Handover permissions.
 - Custody records and ageing/disposal workflows.
+
+The Campus Desk Console is restricted to Django staff users and users whose profile role is
+`desk_admin`. CSV exports use the same authorization rule.
 
 ### Integration
 - Complete workflow from item reporting to recovery.

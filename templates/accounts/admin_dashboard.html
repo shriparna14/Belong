@@ -108,12 +108,12 @@
             <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.75rem; border-radius: var(--radius-sm); background: var(--bg-ivory); border: 1px solid rgba(229, 227, 218, 0.6); gap: 0.75rem;">
               <div style="min-width: 0;">
                 <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem; flex-wrap: wrap;">
-                  {% if it.item_type == 'lost' %}
-                    <span class="badge badge-lost" style="font-size: 0.68rem; padding: 0.15rem 0.4rem;">Lost</span>
-                  {% elif it.status == 'returned' %}
+                  {% if it.status == 'returned' %}
                     <span class="badge badge-returned" style="font-size: 0.68rem; padding: 0.15rem 0.4rem;">Returned</span>
+                  {% elif it.item_type == 'lost' %}
+                    <span class="badge badge-lost" style="font-size: 0.68rem; padding: 0.15rem 0.4rem;">Lost report</span>
                   {% else %}
-                    <span class="badge badge-found" style="font-size: 0.68rem; padding: 0.15rem 0.4rem;">Found</span>
+                    <span class="badge badge-found" style="font-size: 0.68rem; padding: 0.15rem 0.4rem;">Found report</span>
                   {% endif %}
 
                   {% if it.category %}

@@ -35,12 +35,12 @@
 
         <div class="detail-body">
           <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
-            {% if item.item_type == 'lost' %}
-              <span class="badge badge-lost">Lost item</span>
-            {% elif item.status == 'returned' %}
+            {% if item.status == 'returned' %}
               <span class="badge badge-returned">Returned</span>
+            {% elif item.item_type == 'lost' %}
+              <span class="badge badge-lost">Lost report</span>
             {% else %}
-              <span class="badge badge-found">Found item</span>
+              <span class="badge badge-found">Found report</span>
             {% endif %}
 
             <span class="badge badge-pending">{{ item.get_status_display }}</span>

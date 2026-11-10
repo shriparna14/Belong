@@ -11,6 +11,7 @@ from .models import Item, Category, CampusLocation
 from .forms import ItemForm
 from .utils import generate_qr_code_base64
 from claims.models import Claim
+from accounts.models import Notification
 
 
 def index_view(request):
@@ -74,6 +75,8 @@ def index_view(request):
     paginator = Paginator(items, 9)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    pagination_params = request.GET.copy()
+    pagination_params.pop('page', None)
 
     # Check if any filter is active
     has_filters = bool(query or item_type or category_slug or location_id or date_from or date_to or (aging == '1') or (sort_by != 'newest'))
@@ -93,6 +96,7 @@ def index_view(request):
         'current_date_to': date_to,
         'current_sort': sort_by,
         'current_aging': aging,
+        'pagination_query': pagination_params.urlencode(),
     }
     return render(request, 'items/index.html', context)
 
@@ -125,7 +129,7 @@ def item_detail_view(request, pk):
 
     # Score candidates: same category (+2), same location (+1), incident date within 7 days (+1)
     matching_items = []
-    for cand in match_candidates.select_related('category', 'location')[:25]:
+    for cand in match_candidates.select_related('category', 'location'):
         score = 0
         if cand.category_id and cand.category_id == item.category_id:
             score += 2
@@ -165,6 +169,38 @@ def item_create_view(request):
             item = form.save(commit=False)
             item.reporter = request.user
             item.save()
+
+            if item.item_type == 'found' and (item.category_id or item.location_id):
+                match_query = Q()
+                if item.category_id:
+                    match_query |= Q(category_id=item.category_id)
+                if item.location_id:
+                    match_query |= Q(location_id=item.location_id)
+
+                matching_lost_items = Item.objects.filter(
+                    item_type='lost',
+                    status__in=['active', 'claim_pending'],
+                ).filter(match_query).exclude(
+                    reporter=request.user
+                ).select_related('reporter')
+
+                notified_reporters = set()
+                for lost_item in matching_lost_items:
+                    if lost_item.reporter_id in notified_reporters:
+                        continue
+                    notified_reporters.add(lost_item.reporter_id)
+                    Notification.objects.create(
+                        recipient=lost_item.reporter,
+                        title="A similar item was reported found",
+                        message=(
+                            f"'{item.title}' may match your lost-item report "
+                            f"'{lost_item.title}'. Review the public report and "
+                            "use the secure claim process if it is yours."
+                        ),
+                        notification_type='matching_found_report',
+                        link=reverse('items:detail', args=[item.pk]),
+                    )
+
             messages.success(request, f"Your {item.get_item_type_display().lower()} listing has been published successfully!")
             return redirect('items:detail', pk=item.pk)
     else:
@@ -248,7 +284,13 @@ def item_dispose_view(request, pk):
     return redirect('items:desk')
 
 
+@login_required
 def campus_desk_view(request):
+    is_desk = request.user.is_staff or getattr(getattr(request.user, 'profile', None), 'role', '') == 'desk_admin'
+    if not is_desk:
+        messages.error(request, "Staff or Lost & Found Desk authorization required to access the campus desk.")
+        return redirect('items:index')
+
     threshold_days = getattr(settings, 'ITEM_AGING_DAYS_THRESHOLD', 30)
     cutoff_date = timezone.now() - timedelta(days=threshold_days)
     
@@ -269,4 +311,3 @@ def campus_desk_view(request):
         'threshold_days': threshold_days,
     }
     return render(request, 'items/campus_desk.html', context)
-

@@ -95,62 +95,63 @@
       </div>
     {% endif %}
 
-    <div style="margin-top: 3rem;">
-      <h2 style="font-size: 1.4rem; color: var(--deep-pine); margin-bottom: 0.35rem;">
-        All active lost reports
-      </h2>
-      <p style="color: var(--text-secondary); margin-bottom: 1.25rem;">
-        Browse items currently reported missing by the campus community.
-      </p>
+  {% endif %}
 
-      {% if all_lost_items %}
-        <div class="items-grid">
-          {% for it in all_lost_items %}
-            <div class="item-card">
-              <div class="item-card-media">
-                <span class="badge badge-lost item-card-badge">Lost report</span>
+  <div style="margin-top: 3rem;">
+    <h2 style="font-size: 1.4rem; color: var(--deep-pine); margin-bottom: 0.35rem;">
+      All active lost reports
+    </h2>
+    <p style="color: var(--text-secondary); margin-bottom: 1.25rem;">
+      Browse items currently reported missing by the campus community.
+    </p>
 
-                {% if it.image %}
-                  <img src="{{ it.image.url }}" alt="{{ it.title }}" class="item-card-img">
-                {% else %}
-                  <div class="item-card-placeholder">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                      <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                      <polyline points="21 15 16 10 5 21"></polyline>
-                    </svg>
-                  </div>
-                {% endif %}
+    {% if all_lost_items %}
+      <div class="items-grid">
+        {% for it in all_lost_items %}
+          <div class="item-card">
+            <div class="item-card-media">
+              <span class="badge badge-lost item-card-badge">Lost report</span>
+
+              {% if it.image %}
+                <img src="{{ it.image.url }}" alt="{{ it.title }}" class="item-card-img">
+              {% else %}
+                <div class="item-card-placeholder">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                  </svg>
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="item-card-body">
+              <h3 class="item-card-title">
+                <a href="{% url 'items:detail' it.pk %}">{{ it.title }}</a>
+              </h3>
+
+              <div class="item-card-meta">
+                <span>{{ it.location.name|default:"Campus" }}</span>
+                <span>&bull;</span>
+                <span>{{ it.created_at|date:"d M" }}</span>
               </div>
 
-              <div class="item-card-body">
-                <h3 class="item-card-title">
-                  <a href="{% url 'items:detail' it.pk %}">{{ it.title }}</a>
-                </h3>
-
-                <div class="item-card-meta">
-                  <span>{{ it.location.name|default:"Campus" }}</span>
-                  <span>&bull;</span>
-                  <span>{{ it.created_at|date:"d M" }}</span>
-                </div>
-
-                <div class="item-card-footer">
-                  <span style="font-size: 0.8rem; color: var(--text-secondary);">
-                    Reported by {{ it.reporter.get_full_name|default:it.reporter.username }}
-                  </span>
-                  <a href="{% url 'items:detail' it.pk %}" class="item-details-link">
-                    View &rarr;
-                  </a>
-                </div>
+              <div class="item-card-footer">
+                <span style="font-size: 0.8rem; color: var(--text-secondary);">
+                  Reported by {{ it.reporter.get_full_name|default:it.reporter.username }}
+                </span>
+                <a href="{% url 'items:detail' it.pk %}" class="item-details-link">
+                  View &rarr;
+                </a>
               </div>
             </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <p style="color: var(--text-secondary);">No lost items have been reported yet.</p>
-      {% endif %}
-    </div>
-  {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="color: var(--text-secondary);">No lost items have been reported yet.</p>
+    {% endif %}
+  </div>
 
   <!-- TAB 2: Incoming Claims -->
   {% if active_tab == 'incoming' %}

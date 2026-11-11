@@ -107,6 +107,21 @@ class AuthenticationViewsTests(TestCase):
         self.assertContains(response, 'All active lost reports')
         self.assertContains(response, 'Lost campus notebook')
 
+    def test_dashboard_shows_lost_items_on_every_dashboard_tab(self):
+        other_user = User.objects.create_user(username='other_tab_student', password='testpassword123')
+        Item.objects.create(
+            title='Lost item visible on claims tab',
+            item_type='lost',
+            incident_date='2026-11-10',
+            description='Black backpack',
+            reporter=other_user,
+        )
+
+        self.client.login(username='sam_student', password='testpassword123')
+        response = self.client.get(reverse('accounts:dashboard'), {'tab': 'claims'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Lost item visible on claims tab')
+
     def test_admin_dashboard_access_control(self):
         # Non-staff user should be redirected
         self.client.login(username='sam_student', password='testpassword123')

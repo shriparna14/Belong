@@ -151,3 +151,25 @@ class ClaimsAndOTPEndToEndTests(TestCase):
         response = self.client.get(reverse('claims:regenerate_otp', args=[claim.pk]))
         self.assertRedirects(response, reverse('claims:detail', args=[claim.pk]))
         self.assertFalse(HandoffOTP.objects.filter(claim=claim).exists())
+
+    def test_admin_can_approve_pending_claim_from_claim_list(self):
+        admin_user = User.objects.create_superuser(
+            username='admin_claims',
+            email='admin@campus.edu',
+            password='admin-pass123',
+        )
+        claim = self.create_pending_claim()
+        self.client.force_login(admin_user)
+
+        response = self.client.post(reverse('admin:claims_claim_changelist'), {
+            'action': 'approve_claims',
+            '_selected_action': [claim.pk],
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        claim.refresh_from_db()
+        self.item.refresh_from_db()
+        self.assertEqual(claim.status, 'approved')
+        self.assertEqual(claim.reviewed_by, admin_user)
+        self.assertEqual(self.item.status, 'handoff_ready')
+        self.assertTrue(HandoffOTP.objects.filter(claim=claim).exists())
